@@ -16,7 +16,7 @@ futures = "0.3.31"
 sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-rustls", "chrono"] }
 jsonwebtoken = "9"
 argon2 = "0.5"
-utoipa = { version = "4", features = ["axum_extras"] }
+utoipa = { version = "4", features = ["axum_extras", "chrono"] }
 utoipa-swagger-ui = { version = "7", features = ["axum"] }
 dotenvy = "0.15"
 chrono = { version = "0.4", features = ["serde"] }

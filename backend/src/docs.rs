@@ -21,6 +21,7 @@ use crate::snippets;
             auth::AuthResponse,
             snippets::Snippet,
             snippets::CreateSnippetRequest,
+            snippets::CreateSnippetResponse,
             snippets::UpdateSnippetRequest,
             snippets::PatchSnippetRequest,
         )
