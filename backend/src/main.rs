@@ -16,20 +16,41 @@ use tokio_util::codec::{FramedRead, LinesCodec};
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
+mod db;
+mod auth;
+mod snippets;
+mod docs;
+
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
+
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
+    let pool = db::init_db().await;
+    let state = db::AppState { db: pool };
+
     // CORS configuration
     let cors = CorsLayer::new()
         .allow_origin(Any)
-        .allow_methods([Method::GET, Method::POST])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
         .allow_headers(Any);
 
     // Build our application with a route
     let app = Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", docs::ApiDoc::openapi()))
         .route("/", get(|| async { "Rust Compiler API is running!" }))
         .route("/compile", post(compile_and_run))
         .route("/ws", get(ws_handler))
-        .layer(cors);
+        .route("/auth/register", post(auth::register_handler))
+        .route("/auth/login", post(auth::login_handler))
+        .route("/snippets", post(snippets::create_snippet).get(snippets::list_snippets))
+        .route("/snippets/:id", get(snippets::get_snippet)
+            .put(snippets::update_snippet)
+            .patch(snippets::patch_snippet)
+            .delete(snippets::delete_snippet))
+        .layer(cors)
+        .with_state(state);
 
     // Run it
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
@@ -218,7 +239,7 @@ async fn compile_and_run(
         format!("temp/temp_{}", id)
     };
     
-    // For running, we need the path relative to current dir or absolute.
+    // For running, we need the path realtive to current dir or absolute.
     let run_path = if cfg!(target_os = "windows") {
         format!(".\\temp\\temp_{}.exe", id)
     } else {
