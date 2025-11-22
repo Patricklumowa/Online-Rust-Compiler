@@ -1,73 +1,33 @@
-# React + TypeScript + Vite
+# Compily - Backend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The backend service for Compily, written in Rust using the Axum framework. It handles WebSocket connections, manages temporary file creation, executes the Rust compiler (`rustc`), and streams `stdout`/`stderr` back to the client.
 
-Currently, two official plugins are available:
+## 🔧 Setup & Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+# Navigate to backend directory
+cd backend
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Run the server
+cargo run
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The server listens on `0.0.0.0:3001`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🏗️ Architecture
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **`main.rs`**: Entry point. Sets up the Axum router and WebSocket handler.
+- **WebSocket Handler**:
+    - Receives code from the client.
+    - Writes code to a temporary `.rs` file.
+    - Spawns `rustc` to compile the code.
+    - If successful, spawns the resulting binary.
+    - Pipes `stdout` and `stderr` to the WebSocket.
+    - Pipes WebSocket messages (user input) to the process's `stdin`.
+
+## 📦 Key Dependencies
+
+- `axum`: Web framework.
+- `tokio`: Async runtime.
+- `serde`: Serialization.
+- `uuid`: Unique temporary filenames.
